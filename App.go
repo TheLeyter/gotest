@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"gotest/common/db"
 	"gotest/common/envs"
 	"gotest/controllers"
@@ -13,6 +14,7 @@ import (
 type App struct {
 	Router      *gin.Engine
 	DB          *db.Database
+	Redis       *db.RedisDatabase
 	Config      *envs.Config
 	Controllers []controllers.ApiController
 }
@@ -28,6 +30,10 @@ func NewApp() (*App, error) {
 		return nil, err
 	}
 
+	if err := app.initRedis(); err != nil {
+		return nil, err
+	}
+
 	if err := app.initApi(); err != nil {
 		return nil, err
 	}
@@ -36,11 +42,13 @@ func NewApp() (*App, error) {
 }
 
 func (app *App) Run() {
-	app.Router.Run()
+	addr := app.Config.API.Host + ":" + app.Config.API.Port
+	app.Router.Run(addr)
 }
 
 func (app *App) Stop() {
-	// app.Router.St
+	db, _ := app.DB.DB.DB()
+	db.Close()
 }
 
 func (app *App) initConfig() error {
@@ -66,6 +74,16 @@ func (app *App) initDatabase() error {
 	}
 
 	app.DB = db
+	return nil
+}
+
+func (app *App) initRedis() error {
+	app.Redis = db.NewRedisDatabse(app.Config.Redis)
+	app.Redis.Connect()
+	err := app.Redis.Redis.Set(ctx, "key", "Hello from go server", 0).Err()
+	if err != nil {
+		fmt.Println("<<<<<" + err.Error() + ">>>>>>")
+	}
 	return nil
 }
 

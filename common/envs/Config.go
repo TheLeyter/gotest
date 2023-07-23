@@ -1,6 +1,7 @@
 package envs
 
 import (
+	"fmt"
 	"gotest/common/errors"
 	"os"
 	"strconv"
@@ -10,19 +11,29 @@ import (
 
 type DbConfig struct {
 	Host     string
+	Port     int
 	User     string
 	Password string
 	Name     string
-	Port     int
+}
+
+type RedisConfig struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
 }
 
 type ApiConfig struct {
 	Secret string
+	Host   string
+	Port   string
 }
 
 type Config struct {
-	DB  *DbConfig
-	API *ApiConfig
+	DB    *DbConfig
+	API   *ApiConfig
+	Redis *RedisConfig
 }
 
 func NewConfig() (*Config, error) {
@@ -40,6 +51,12 @@ func NewConfig() (*Config, error) {
 		return nil, err
 	}
 
+	if err := config.initRedisConfig(); err != nil {
+		return nil, err
+	}
+
+	fmt.Println(config.Redis)
+
 	return config, nil
 }
 
@@ -49,7 +66,17 @@ func (c *Config) initApi() error {
 		return &errors.DBError{Message: "JWT_SECRET not found in .env file"}
 	}
 
-	c.API = &ApiConfig{Secret: secret}
+	host, ok := os.LookupEnv("API_HOST")
+	if !ok {
+		return &errors.DBError{Message: "API_HOST not found in .env file"}
+	}
+
+	port, ok := os.LookupEnv("API_PORT")
+	if !ok {
+		return &errors.DBError{Message: "API_PORT not found in .env file"}
+	}
+
+	c.API = &ApiConfig{Secret: secret, Host: host, Port: port}
 
 	return nil
 }
@@ -88,5 +115,30 @@ func (c *Config) initDbConfig() error {
 
 	c.DB = &DbConfig{Host: dbHost, User: dbUser, Password: dbPassword, Name: dbName, Port: dbPort}
 
+	return nil
+}
+
+func (c *Config) initRedisConfig() error {
+	host, ok := os.LookupEnv("REDIS_HOST")
+	if !ok {
+		return &errors.DBError{Message: "REDIS_HOST not found in .env file"}
+	}
+
+	user, ok := os.LookupEnv("REDIS_USER")
+	if !ok {
+		return &errors.DBError{Message: "REDIS_USER not found in .env file"}
+	}
+
+	password, ok := os.LookupEnv("REDIS_PASSWORD")
+	if !ok {
+		return &errors.DBError{Message: "REDIS_PASSWORD not found in .env file"}
+	}
+
+	port, ok := os.LookupEnv("REDIS_PORT")
+	if !ok {
+		return &errors.DBError{Message: "REDIS_PORT not found in .env file"}
+	}
+
+	c.Redis = &RedisConfig{Host: host, Port: port, User: user, Password: password}
 	return nil
 }

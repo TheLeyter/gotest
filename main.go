@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"log"
 )
+
+var ctx = context.Background()
 
 func main() {
 	app, err := NewApp()
