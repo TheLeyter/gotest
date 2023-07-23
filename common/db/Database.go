@@ -25,5 +25,5 @@ func NewDatabase(config *envs.DbConfig) (*Database, error) {
 }
 
 func (db *Database) InitScheme() error {
-	return db.DB.AutoMigrate(&models.User{})
+	return db.DB.AutoMigrate(&models.UserDto{})
 }

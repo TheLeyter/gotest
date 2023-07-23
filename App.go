@@ -76,7 +76,7 @@ func (app *App) initApi() error {
 
 	userRepository := repositories.NewUserRepository(app.DB)
 
-	authService := auth.NewAuthService(userRepository)
+	authService := auth.NewAuthService(userRepository, app.Config.API)
 
 	app.Controllers = append(app.Controllers, controllers.NewAuthController(v1api, authService))
 

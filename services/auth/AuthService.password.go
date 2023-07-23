@@ -1,43 +1,13 @@
 package auth
 
-import (
-	"crypto/rand"
-	"crypto/sha512"
-	"encoding/hex"
-)
+import "golang.org/x/crypto/bcrypt"
 
-const saltSize = 16
-
-func (service *AuthService) generateRandomSalt(saltSize int) (string, error) {
-	var salt = make([]byte, saltSize)
-
-	_, err := rand.Read(salt[:])
-
-	if err != nil {
-		return "", err
-	}
-
-	return string(salt), nil
+func (service *AuthService) HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
 }
 
-func hashPassword(password string, salt string) string {
-	// Convert password string to byte slice
-	var passwordBytes = []byte(password)
-
-	// Create sha-512 hasher
-	var sha512Hasher = sha512.New()
-
-	// Append salt to password
-	passwordBytes = append(passwordBytes, []byte(salt)...)
-
-	// Write password bytes to the hasher
-	sha512Hasher.Write(passwordBytes)
-
-	// Get the SHA-512 hashed password
-	var hashedPasswordBytes = sha512Hasher.Sum(nil)
-
-	// Convert the hashed password to a hex string
-	var hashedPasswordHex = hex.EncodeToString(hashedPasswordBytes)
-
-	return hashedPasswordHex
+func (service *AuthService) CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }

@@ -17,6 +17,7 @@ type DbConfig struct {
 }
 
 type ApiConfig struct {
+	Secret string
 }
 
 type Config struct {
@@ -26,6 +27,10 @@ type Config struct {
 
 func NewConfig() (*Config, error) {
 	config := &Config{}
+
+	if err := godotenv.Load(".env"); err != nil {
+		return nil, err
+	}
 
 	if err := config.initDbConfig(); err != nil {
 		return nil, err
@@ -39,14 +44,17 @@ func NewConfig() (*Config, error) {
 }
 
 func (c *Config) initApi() error {
+	secret, ok := os.LookupEnv("JWT_SECRET")
+	if !ok {
+		return &errors.DBError{Message: "JWT_SECRET not found in .env file"}
+	}
+
+	c.API = &ApiConfig{Secret: secret}
+
 	return nil
 }
 
 func (c *Config) initDbConfig() error {
-	if err := godotenv.Load(".env"); err != nil {
-		return err
-	}
-
 	dbHost, ok := os.LookupEnv("POSTGRES_HOST")
 	if !ok {
 		return &errors.DBError{Message: "POSTGRES_HOST not found in .env file"}
@@ -78,8 +86,7 @@ func (c *Config) initDbConfig() error {
 		return error
 	}
 
-	dbConfig := DbConfig{Host: dbHost, User: dbUser, Password: dbPassword, Name: dbName, Port: dbPort}
-	c.DB = &dbConfig
+	c.DB = &DbConfig{Host: dbHost, User: dbUser, Password: dbPassword, Name: dbName, Port: dbPort}
 
 	return nil
 }

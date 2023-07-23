@@ -39,11 +39,36 @@ func (controller *AuthContoller) login(c *gin.Context) {
 		return
 	}
 
-	response := controller.Service.Login(&loginRequest)
+	response, err := controller.Service.Login(&loginRequest)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, response)
 }
 
 func (controller *AuthContoller) register(c *gin.Context) {
+	var registerRequest auth.RegisterRequest
 
+	if err := c.ShouldBindJSON(&registerRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	response, err := controller.Service.Register(&registerRequest)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
 }

@@ -1,6 +1,9 @@
 package auth
 
-import "gotest/models"
+import (
+	"gotest/common/errors"
+	"gotest/models"
+)
 
 type RegisterRequest struct {
 	Username string `json:"username"`
@@ -13,11 +16,37 @@ type RegisterResponse struct {
 	Tokens *Tokens      `json:"tokens"`
 }
 
-func (service *AuthService) Register(request *RegisterRequest) *RegisterResponse {
-	user := service.userRepository.Find(request.Username)
-	if user != nil {
-		return nil
+func (service *AuthService) Register(request *RegisterRequest) (*RegisterResponse, error) {
+	// findUser := service.userRepository.Find(request.Username)
+
+	// fmt.Println(findUser)
+
+	// if findUser != nil {
+	// 	fmt.Println("-------------------")
+	// 	return nil
+	// }
+
+	hashPassword, err := service.HashPassword(request.Password)
+
+	if err != nil {
+		return nil, &errors.APIError{Message: "Incorect password"}
 	}
 
-	return &RegisterResponse{User: user, Tokens: &Tokens{AccessToken: "access-token", RefreshToken: "refresh-token"}}
+	userDto, err := service.userRepository.Create(request.Username, request.Email, hashPassword)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var userModel = models.User{Id: userDto.Id, Username: userDto.Username, Email: userDto.Email, Photo: userDto.Photo}
+
+	accessToken, err := service.generateJwtToken(userDto)
+
+	if err != nil {
+		return nil, &errors.APIError{Message: "Token can't created"}
+	}
+
+	var tokens = Tokens{AccessToken: accessToken, RefreshToken: "refresh-token"}
+
+	return &RegisterResponse{User: &userModel, Tokens: &tokens}, nil
 }

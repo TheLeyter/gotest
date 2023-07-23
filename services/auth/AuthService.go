@@ -1,17 +1,16 @@
 package auth
 
-import "gotest/repositories"
+import (
+	"gotest/common/envs"
+	"gotest/repositories"
+)
 
 type AuthService struct {
 	userRepository *repositories.UserRepository
+	config         *envs.ApiConfig
 }
 
-type Tokens struct {
-	AccessToken  string `json:"access"`
-	RefreshToken string `json:"refresh"`
-}
-
-func NewAuthService(repository *repositories.UserRepository) *AuthService {
-	authService := AuthService{userRepository: repository}
+func NewAuthService(repository *repositories.UserRepository, config *envs.ApiConfig) *AuthService {
+	authService := AuthService{userRepository: repository, config: config}
 	return &authService
 }
